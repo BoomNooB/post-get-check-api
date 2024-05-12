@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"p3/app/config"
+	"p3/app/handler"
 	"syscall"
 	"time"
 
@@ -72,8 +73,11 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
 
+	// new handler
+	handler := handler.NewHandler()
+
 	// Routes
-	e.GET("/", hello)
+	e.GET("/health", handler.HealthCheck)
 	// e.POST("/broadcast", BroadcastTransaction)
 	// e.GET("/check/:tx_hash", MonitorTransaction)
 
@@ -109,9 +113,4 @@ func gracefulShutdown(ctx context.Context, e *echo.Echo) {
 	if err != nil {
 		e.Logger.Fatal(err)
 	}
-
-}
-
-func hello(c echo.Context) error {
-	return c.String(http.StatusOK, "Hello, World!")
 }
