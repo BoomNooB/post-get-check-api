@@ -2,6 +2,7 @@
 # Problem 3: Transaction Broadcasting and Monitoring Client 
 
 ## TechStack
+Please use **Go version** at least **1.20**
 All are written in Go, here is the library I'm using
 - Echo
 - Viper
