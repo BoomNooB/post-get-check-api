@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"p3/app/config"
 	"p3/app/handler"
+	"p3/app/service"
 	"syscall"
 	"time"
 
@@ -25,23 +26,22 @@ var (
 )
 
 func init() {
-	var cfg zap.Config
+	var zapCfg zap.Config
 	var err error
 	conf = config.ConfigLoader()
 
 	switch conf.LogEnv {
 	case "dev":
-		cfg = zap.NewDevelopmentConfig()
-		cfg.EncoderConfig.EncodeTime = func(t time.Time, encoder zapcore.PrimitiveArrayEncoder) {
+		zapCfg = zap.NewDevelopmentConfig()
+		zapCfg.EncoderConfig.EncodeTime = func(t time.Time, encoder zapcore.PrimitiveArrayEncoder) {
 			encoder.AppendString(t.Format(time.RFC3339Nano)) // Encode time in RFC339Nano format
 		}
 	case "prod":
-		cfg = zap.NewProductionConfig()
+		zapCfg = zap.NewProductionConfig()
 	default:
 		panic(fmt.Errorf("invalid log environment: %s", conf.LogEnv))
 	}
-
-	logger, err = cfg.Build()
+	logger, err = zapCfg.Build()
 	if err != nil {
 		panic(fmt.Errorf("error creating logger: %s", err.Error()))
 	}
@@ -52,18 +52,17 @@ func init() {
 func main() {
 	// ctx bg
 	ctx := context.Background()
-	// New context
-	logger.Info("test")
-
 	// Echo instance
 	e := echo.New()
 
 	// Middleware
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
-		LogURI:    true,
-		LogStatus: true,
+		LogURI:       true,
+		LogStatus:    true,
+		LogRequestID: true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
 			logger.Info("request",
+				zap.String("X-Request-ID", v.RequestID),
 				zap.String("URI", v.URI),
 				zap.Int("status", v.Status),
 			)
@@ -73,13 +72,16 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
 
+	// new service
+	service := service.NewService(conf, logger)
+
 	// new handler
-	handler := handler.NewHandler()
+	handler := handler.NewHandler(conf, service, logger)
 
 	// Routes
-	e.GET("/health", handler.HealthCheck)
-	// e.POST("/broadcast", BroadcastTransaction)
-	// e.GET("/check/:tx_hash", MonitorTransaction)
+	e.GET(conf.ApiPath.HealthCheckPath, handler.HealthCheck)
+	e.POST(conf.ApiPath.BroadCastExtPath, handler.BroadcastExtTxn)
+	e.GET(conf.ApiPath.PendingCheck, handler.PendingExtCheck)
 
 	// Start server
 	go func() {
