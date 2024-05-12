@@ -2,12 +2,14 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"p3/app/config"
 	"p3/app/constant"
 	"p3/app/model"
 	"p3/app/service"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -68,6 +70,16 @@ func (h *handler) BroadcastExtTxn(ec echo.Context) error {
 		})
 	}
 
+	// validate time
+	err = timeFormatCheckUnix(reqBody.TimeStamp)
+	if err != nil {
+		h.logger.Info("timestamp is invalid", zap.Error(err), zap.Any(constant.XReqID, ctx.Value(constant.XReqID)))
+		return ec.JSON(http.StatusBadRequest, model.ResponseExternal{
+			Message: "timestamp is invalid",
+		})
+
+	}
+
 	// send request body to service for business logic
 	err, txStatus := h.service.BroadcastAndCheck(ctx, reqHeader, *reqBody)
 	if err != nil {
@@ -77,7 +89,7 @@ func (h *handler) BroadcastExtTxn(ec echo.Context) error {
 		})
 	}
 	if txStatus == constant.Pending {
-		
+
 		return ec.JSON(http.StatusOK, model.ResponseExternal{
 			Message: fmt.Sprintf("After retry %d times, status are still %s, please check via %s",
 				h.conf.RetryForCheck.RetryTimes,
@@ -135,4 +147,12 @@ func (h *handler) PendingExtCheck(ec echo.Context) error {
 		Message:  "Status checking success",
 		TXStatus: txStatus,
 	})
+}
+
+func timeFormatCheckUnix(input uint64) error {
+	strInput := strconv.FormatUint(input, 10)
+	if len(strInput) < 10 || len(strInput) > 13 {
+		return errors.New("input must be between 10 and 13 digits")
+	}
+	return nil
 }
