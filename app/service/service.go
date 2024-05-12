@@ -14,7 +14,7 @@ import (
 )
 
 type ServiceInterface interface {
-	BroadcastAndCheck(ctx context.Context, reqHeader string, reqBody model.RequestBodyBroadcastTxn) (error, string)
+	BroadcastAndCheck(ctx context.Context, reqHeader string, reqBody model.RequestBodyBroadcastTxn) (error, string, string)
 	CheckStatus(ctx context.Context, txStatus string) (error, string)
 }
 
@@ -27,14 +27,14 @@ func NewService(conf *config.AppConfig, logger *zap.Logger) ServiceInterface {
 	return &service{conf, logger}
 }
 
-func (s *service) BroadcastAndCheck(ctx context.Context, reqHeader string, reqBody model.RequestBodyBroadcastTxn) (error, string) {
+func (s *service) BroadcastAndCheck(ctx context.Context, reqHeader string, reqBody model.RequestBodyBroadcastTxn) (error, string, string) {
 	httpClient := http.Client{
 		Timeout: s.conf.HTTPClientTimeOut,
 	}
 	// broadcast for tx_hash
 	err, txHash := s.broadcastForTxn(ctx, httpClient, reqBody)
 	if err != nil {
-		return err, ""
+		return err, "", ""
 	}
 	httpClient.CloseIdleConnections()
 
@@ -42,7 +42,7 @@ func (s *service) BroadcastAndCheck(ctx context.Context, reqHeader string, reqBo
 	// periodically check status
 	err, txnStatusString := s.checkTxStatus(ctx, httpClient, txHash)
 	if err != nil {
-		return err, ""
+		return err, "", txHash
 	}
 	if txnStatusString == "PENDING" {
 		retryCount := 1
@@ -54,15 +54,15 @@ func (s *service) BroadcastAndCheck(ctx context.Context, reqHeader string, reqBo
 			time.Sleep(s.conf.RetryForCheck.RetryDelay)
 			err, txnStatusString := s.checkTxStatus(ctx, httpClient, txHash)
 			if err != nil {
-				return err, ""
+				return err, "", txHash
 			}
 			if txnStatusString != constant.Pending {
-				return nil, txnStatusString
+				return nil, txnStatusString, txHash
 			}
 			retryCount++
 		}
 	}
-	return nil, txnStatusString
+	return nil, txnStatusString, txHash
 }
 
 func (s *service) CheckStatus(ctx context.Context, txHash string) (error, string) {

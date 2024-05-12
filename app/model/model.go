@@ -21,4 +21,5 @@ type ResponseFromBroadcastTxn struct {
 type ResponseExternal struct {
 	Message  string `json:"msg"`
 	TXStatus string `json:"tx_status,omitempty"`
+	TXHash   string `json:"tx_hash,omitempty"`
 }

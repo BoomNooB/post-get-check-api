@@ -81,11 +81,12 @@ func (h *handler) BroadcastExtTxn(ec echo.Context) error {
 	}
 
 	// send request body to service for business logic
-	err, txStatus := h.service.BroadcastAndCheck(ctx, reqHeader, *reqBody)
+	err, txStatus, txHash := h.service.BroadcastAndCheck(ctx, reqHeader, *reqBody)
 	if err != nil {
 		h.logger.Error("Cannot broadcast and check for transactions", zap.Error(err), zap.Any(constant.XReqID, ctx.Value(constant.XReqID)))
 		return ec.JSON(http.StatusInternalServerError, model.ResponseExternal{
 			Message: "Cannot broadcast and check for transactions",
+			TXHash:  txHash,
 		})
 	}
 	if txStatus == constant.Pending {
@@ -95,11 +96,13 @@ func (h *handler) BroadcastExtTxn(ec echo.Context) error {
 				h.conf.RetryForCheck.RetryTimes,
 				txStatus,
 				h.conf.ApiPath.PendingCheck),
+			TXHash: txHash,
 		})
 	}
 	return ec.JSON(http.StatusOK, model.ResponseExternal{
 		Message:  "Status checking success",
 		TXStatus: txStatus,
+		TXHash:   txHash,
 	})
 }
 
@@ -137,9 +140,9 @@ func (h *handler) PendingExtCheck(ec echo.Context) error {
 	// send request body to service for business logic
 	err, txStatus := h.service.CheckStatus(ctx, reqBody.TXStatus)
 	if err != nil {
-		h.logger.Error("Cannot broadcast and check for transactions", zap.Error(err), zap.Any(constant.XReqID, ctx.Value(constant.XReqID)))
+		h.logger.Error("Cannot check for transactions", zap.Error(err), zap.Any(constant.XReqID, ctx.Value(constant.XReqID)))
 		return ec.JSON(http.StatusInternalServerError, model.ResponseExternal{
-			Message: "Cannot broadcast and check for transactions",
+			Message: "Cannot check for transactions",
 		})
 	}
 
