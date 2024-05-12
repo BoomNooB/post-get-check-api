@@ -1,0 +1,15 @@
+app:
+  port: :8080
+logger:
+  env: prod
+context_timeout_graceful: 10s
+http_client_timeout: 10s
+api_path:
+  health-check: /health
+  post-txn: https://some-app.com/broadcast/
+  get-txn: https://some-app.com/check/
+  broadcast-ext-txn-path: /broadcast/
+  check-ext-txn-pending: /check/pending/
+retry_for_check:
+  retry_times: 6
+  retry_repeat_delay: 10s
