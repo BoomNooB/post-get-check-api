@@ -83,7 +83,7 @@ This will perform checking status of that transaction only one time
 - **Request Body:**
 ```
   {
-    "tx_status": "781e812ac6b5542d320b3da916b13a431cacbe01caee19476efb3641965f2877"
+    "tx_hash": "781e812ac6b5542d320b3da916b13a431cacbe01caee19476efb3641965f2877"
     // it's a hash that get from broadcasting in case of it's still pending after retry
   }
 ```
