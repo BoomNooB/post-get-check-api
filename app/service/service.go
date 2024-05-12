@@ -46,7 +46,7 @@ func (s *service) BroadcastAndCheck(ctx context.Context, reqHeader string, reqBo
 	}
 	if txnStatusString == "PENDING" {
 		retryCount := 1
-		for range s.conf.RetryForCheck.RetryTimes {
+		for retryCount <= s.conf.RetryForCheck.RetryTimes{
 			s.logger.Info("tx_status is pending, retry to check again",
 				zap.String(constant.TXNHash, txHash),
 				zap.Int(constant.RetryCount, retryCount),

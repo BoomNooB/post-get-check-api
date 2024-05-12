@@ -67,7 +67,7 @@ and if status is pending it will retry until reach point that we've set in `conf
 ```
 {
   "symbol":"VTX", //must be string 
-  "timestamp":12345, //must be uint64
+  "timestamp":1234567890213, //must be uint64
   "price":1234 //must be uint64
 }
 ```

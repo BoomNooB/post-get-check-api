@@ -11,7 +11,7 @@ type RequestTxnStatusCheck struct {
 }
 
 type RequestBodyTxnStatusCheckExt struct {
-	TXStatus string `json:"tx_status" validate:"required"`
+	TXHash string `json:"tx_hash" validate:"required"`
 }
 
 type ResponseFromBroadcastTxn struct {

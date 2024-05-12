@@ -138,7 +138,7 @@ func (h *handler) PendingExtCheck(ec echo.Context) error {
 	}
 
 	// send request body to service for business logic
-	err, txStatus := h.service.CheckStatus(ctx, reqBody.TXStatus)
+	err, txStatus := h.service.CheckStatus(ctx, reqBody.TXHash)
 	if err != nil {
 		h.logger.Error("Cannot check for transactions", zap.Error(err), zap.Any(constant.XReqID, ctx.Value(constant.XReqID)))
 		return ec.JSON(http.StatusInternalServerError, model.ResponseExternal{
