@@ -13,9 +13,6 @@ const (
 	// content type for req
 	ContentTypeJSON = "application/json"
 
-	// http method
-	POST = "POST"
-
 	// TXN_HASH
 	TXNHash   = "tx_hash"
 	TXNStatus = "tx_status"

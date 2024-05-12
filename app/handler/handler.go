@@ -77,6 +77,7 @@ func (h *handler) BroadcastExtTxn(ec echo.Context) error {
 		})
 	}
 	if txStatus == constant.Pending {
+		
 		return ec.JSON(http.StatusOK, model.ResponseExternal{
 			Message: fmt.Sprintf("After retry %d times, status are still %s, please check via %s",
 				h.conf.RetryForCheck.RetryTimes,

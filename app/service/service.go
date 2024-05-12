@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"p3/app/config"
 	"p3/app/constant"
 	"p3/app/model"
-	"reflect"
 	"time"
 
 	"go.uber.org/zap"
@@ -38,6 +36,7 @@ func (s *service) BroadcastAndCheck(ctx context.Context, reqHeader string, reqBo
 	if err != nil {
 		return err, ""
 	}
+	httpClient.CloseIdleConnections()
 
 	/* --------------- */
 	// periodically check status
@@ -45,7 +44,6 @@ func (s *service) BroadcastAndCheck(ctx context.Context, reqHeader string, reqBo
 	if err != nil {
 		return err, ""
 	}
-	log.Println(txnStatusString)
 	if txnStatusString == "PENDING" {
 		retryCount := 1
 		for range s.conf.RetryForCheck.RetryTimes {
@@ -59,7 +57,7 @@ func (s *service) BroadcastAndCheck(ctx context.Context, reqHeader string, reqBo
 				return err, ""
 			}
 			if txnStatusString != constant.Pending {
-				break
+				return nil, txnStatusString
 			}
 			retryCount++
 		}
@@ -102,8 +100,6 @@ func (s *service) checkTxStatus(ctx context.Context, httpClient http.Client, txH
 	s.logger.Info("The txn status decode successfully",
 		zap.Any(constant.XReqID, ctx.Value(constant.XReqID)),
 		zap.String(constant.TXNStatus, txnStatus.TXStatus))
-	log.Printf("value is %s", txnStatus.TXStatus)
-	log.Println("type is ", reflect.TypeOf(txnStatus.TXStatus))
 	return nil, txnStatus.TXStatus
 }
 
